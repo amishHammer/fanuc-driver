@@ -6,7 +6,7 @@ namespace l99.driver.fanuc.veneers
 {
     public class SysInfo : Veneer
     {
-        public SysInfo(string name = "", bool isCompound = false, bool isInternal = false) : base(name, isCompound, isInternal)
+        public SysInfo(string name = "", bool isCompound = false, bool isInternal = false, Machine machine = null) : base(name, isCompound, isInternal, machine)
         {
             lastChangedValue = new
             {
@@ -26,8 +26,12 @@ namespace l99.driver.fanuc.veneers
         
         protected override async Task<dynamic> AnyAsync(dynamic input, params dynamic?[] additionalInputs)
         {
+            FanucMachine machine = (FanucMachine)_machine;
+
             if (input.success)
             {
+                machine.SeenSysInfo = true;
+                
                 // ADDITIONAL INFO
                 byte[] info_bytes = BitConverter.GetBytes(input.response.cnc_sysinfo.sysinfo.addinfo);
                 
@@ -102,6 +106,7 @@ namespace l99.driver.fanuc.veneers
                             cnc_type = "Power Motion i";
                             break;
                 }
+                machine.ControlModel = cnc_type_code;
 
                 // MT TYPE
                 var mt_type_code = string.Join("", input.response.cnc_sysinfo.sysinfo.mt_type);
@@ -134,6 +139,7 @@ namespace l99.driver.fanuc.veneers
                         mt_type = "Wire cut";
                         break;
                 }
+                machine.ControlType = mt_type;
 
                 // AXIS COUNT
                 dynamic axes;
